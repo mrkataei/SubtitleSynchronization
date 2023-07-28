@@ -1,1 +1,1 @@
-"# SubtitleSynchronization" 
+# SubtitleSynchronization
