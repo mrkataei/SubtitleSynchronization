@@ -84,7 +84,7 @@ def virtualize(caption1, caption2):
     merged_caption_df = pd.merge(
         caption1_df, caption2_df, on='Time', suffixes=('subtitle', 'translate'), how='left')
 
-    merged_caption_df.to_csv('trst.csv')
+    merged_caption_df.to_csv('results.csv')
     print(merged_caption_df)
 
 
