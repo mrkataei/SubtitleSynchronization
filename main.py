@@ -1,41 +1,51 @@
 import webvtt
 
 
-def calculate_time_shift(subtitle1, subtitle2):
-    # Implement logic to calculate time shift between subtitle1 and subtitle2
-    # For example, you can calculate the time difference between the start timestamps
-    time_shift = subtitle2.start_in_seconds - subtitle1.start_in_seconds
-    return time_shift
+def delete_two_milliseconds(timestamp_str):
+    # Split the timestamp string into hours, minutes, seconds, and milliseconds
+    h, m, s, ms = map(int, timestamp_str.replace('.', ':').split(':'))
+
+    # Delete two digits from milliseconds
+    rounded_ms = ms // 100
+    # Convert back to the WebVTT format string (hh:mm:ss.mmm)
+    rounded_timestamp_str = "{:02d}:{:02d}:{:02d}.{:03d}".format(
+        h, m, s, rounded_ms)
+    return rounded_timestamp_str
 
 
-def synchronize_subtitles(subtitles1, subtitles2, time_shift):
-    # Adjust the timestamps of subtitles1 by adding the time shift
-    for subtitle in subtitles1:
-        subtitle.start += time_shift
-        subtitle.end += time_shift
+def round_milliseconds(captions):
+    for cap in captions:
+        cap.start = delete_two_milliseconds(cap.start)
+
+    return captions
+
+
+def prepare(captions):
+    new_subtitles_en = []
+    i = 0
+    while i < len(captions) - 1:
+        temp = 1
+        for j in range(i+1, len(captions)):
+            if captions[i].start == captions[j].start:
+                captions[i].text = captions[i].text + " " + \
+                    captions[j].text
+                temp = temp + 1
+            if j == len(captions) - 1:
+                new_subtitles_en.append(captions[i])
+        i = i + temp
+
+    return new_subtitles_en
 
 
 def main():
     # Load the .vtt files
-    subtitles_en = webvtt.read('subtitles_en.vtt')
-    subtitles_es = webvtt.read('subtitles_es.vtt')
+    subtitles_en = webvtt.read('en.vtt')
+    subtitles_es = webvtt.read('de.vtt')
 
-    # Find corresponding subtitles and calculate time shift
-    for subtitle_en in subtitles_en:
-        best_match = None
-        min_time_shift = float('inf')
-        for subtitle_es in subtitles_es:
-            time_shift = calculate_time_shift(subtitle_en, subtitle_es)
-            if abs(time_shift) < abs(min_time_shift):
-                min_time_shift = time_shift
-                best_match = subtitle_es
+    subtitles_en = prepare(subtitles_en) if len(
+        subtitles_en) > len(subtitles_es) else prepare(subtitles_es)
 
-        # Synchronize subtitles if a match is found
-        if best_match is not None:
-            synchronize_subtitles([subtitle_en], [best_match], min_time_shift)
-
-    # Save the updated .vtt file for English subtitles
-    webvtt.write('subtitles_en_synchronized.vtt', subtitles_en)
+    print(subtitles_en)
 
 
 if __name__ == '__main__':
